@@ -1,6 +1,7 @@
 let btn = document.getElementById('searchBtn')
 let cityName = document.getElementById('cityName')
 const API_KEY = 'a020c8b4fab16c5ecce5b73dbb4681e8'
+const WEATHER_API_BASE = 'https://api.openweathermap.org/data/2.5/weather'
 const themeToggle = document.getElementById('themeToggle')
 
 function setTheme(isLight) {
@@ -20,12 +21,22 @@ async function fetchData(city) {
     try{
         cityName.value = ''
         console.log("city name", city)
-        let res = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
-        let result = await res.json()
-        if(result.message){
-            document.getElementById("secondDiv").innerHTML = `<h1>${city} ${result.message}</h1>`
-    }
-        displayWeather(result);
+        const url = new URL(WEATHER_API_BASE)
+        url.search = new URLSearchParams({
+            q: city,
+            appid: API_KEY,
+            units: 'metric',
+        })
+
+        const res = await fetch(url)
+        const result = await res.json()
+
+        if (!res.ok || result?.message) {
+            document.getElementById("secondDiv").innerHTML = `<h1>${city || 'City'} ${result?.message || 'not found'}</h1>`
+            return
+        }
+
+        displayWeather(result)
     }catch(err){
         console.log(err)
     }
@@ -33,14 +44,24 @@ async function fetchData(city) {
 async function fetchDataByCoordinated(lati,longi) {
     try{
         cityName.value = ''
-        let res = await fetch(`http://api.openweathermap.org/data/2.5/weather?lat=${lati}&lon=${longi}&appid=${API_KEY}&units=metric`)
-        let result = await res.json()
+        const url = new URL(WEATHER_API_BASE)
+        url.search = new URLSearchParams({
+            lat: String(lati),
+            lon: String(longi),
+            appid: API_KEY,
+            units: 'metric',
+        })
+
+        const res = await fetch(url)
+        const result = await res.json()
         console.log(result)
-        if(result.message){
-            document.getElementById("secondDiv").innerHTML = `<h1>${city} ${result.message}</h1>`
-            return;
+
+        if (!res.ok || result?.message) {
+            document.getElementById("secondDiv").innerHTML = `<h1>${result?.message || 'Unable to fetch weather'}</h1>`
+            return
         }
-        displayWeather(result);
+
+        displayWeather(result)
     }catch(err){
         console.log(err)
     }
